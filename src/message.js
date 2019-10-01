@@ -9,12 +9,14 @@ const p_classes = require('../open_fints_js_client-master/lib/Parser'),
 
 let message = function (proto_version) {
   var me_msg = this;
-  me_msg.segments = new Array();
+  me_msg.segments = [];
   me_msg.segments_ctr = 0;
   me_msg.sign_it = null;
   me_msg.hnvsk = null;
   me_msg.msg_nr = 0;
   me_msg.proto_version = proto_version;
+
+  let createSegment = h.types.createSegment;
 
   me_msg.sign = function (sign_obj) {
     // sign_obj = {'pin':pin,'tan':tan,'sys_id':0}// Tan bitte null setzen wenn nicht benötigt
@@ -65,33 +67,45 @@ let message = function (proto_version) {
       me_msg.sign_it.blz = blz;
       me_msg.sign_it.kunden_id = kunden_id;
 
+      let createHNSHK = function (serverDefined) {
+        let serverDefinedParam = (serverDefined === undefined) ? 1 : 2;
+        let params = [
+          ['PIN', me_msg.sign_it.pin_vers == '999' ? 1 : 2], me_msg.sign_it.pin_vers, 1, 1, 1, [serverDefinedParam, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
+          [1, 999, 1],
+          [6, 10, 16],
+          [280, blz, kunden_id, 'S', 0, 0]
+        ];
+        return h.types.createSegment('HNSHK', 4, params);
+      };
+
       var seg_vers, sec_profile;
       if (me_msg.proto_version == 300) {
-        me_msg.sign_it.server === undefined
-          ? me_msg.addSeg(Helper.newSegFromArray('HNSHK', 4, [
-            ['PIN', me_msg.sign_it.pin_vers == '999' ? 1 : 2], me_msg.sign_it.pin_vers, 1, 1, 1, [1, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
-            [1, 999, 1],
-            [6, 10, 16],
-            [280, blz, kunden_id, 'S', 0, 0]
-          ]))
-          : me_msg.addSeg(Helper.newSegFromArray('HNSHK', 4, [
-            ['PIN', me_msg.sign_it.pin_vers == '999' ? 1 : 2], me_msg.sign_it.pin_vers, 1, 1, 1, [2, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
-            [1, 999, 1],
-            [6, 10, 16],
-            [280, blz, kunden_id, 'S', 0, 0]
-          ]));
+        me_msg.addSeg(createHNSHK(me_msg.sign_it.server));
+        // me_msg.sign_it.server === undefined
+        //   ? me_msg.addSeg(Helper.newSegFromArray('HNSHK', 4, [
+        //     ['PIN', me_msg.sign_it.pin_vers == '999' ? 1 : 2], me_msg.sign_it.pin_vers, 1, 1, 1, [1, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
+        //     [1, 999, 1],
+        //     [6, 10, 16],
+        //     [280, blz, kunden_id, 'S', 0, 0]
+        //   ]))
+        //   : me_msg.addSeg(Helper.newSegFromArray('HNSHK', 4, [
+        //     ['PIN', me_msg.sign_it.pin_vers == '999' ? 1 : 2], me_msg.sign_it.pin_vers, 1, 1, 1, [2, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
+        //     [1, 999, 1],
+        //     [6, 10, 16],
+        //     [280, blz, kunden_id, 'S', 0, 0]
+        //   ]));
       } else {
-        me_msg.sign_it.server === undefined
-          ? me_msg.addSeg(Helper.newSegFromArray('HNSHK', 3, [me_msg.sign_it.pin_vers, 1, 1, 1, [1, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
-            [1, 999, 1],
-            [6, 10, 16],
-            [280, blz, kunden_id, 'S', 0, 0]
-          ]))
-          : me_msg.addSeg(Helper.newSegFromArray('HNSHK', 3, [me_msg.sign_it.pin_vers, 1, 1, 1, [2, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
-            [1, 999, 1],
-            [6, 10, 16],
-            [280, blz, kunden_id, 'S', 0, 0]
-          ]));
+        // me_msg.sign_it.server === undefined
+        //   ? me_msg.addSeg(Helper.newSegFromArray('HNSHK', 3, [me_msg.sign_it.pin_vers, 1, 1, 1, [1, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
+        //     [1, 999, 1],
+        //     [6, 10, 16],
+        //     [280, blz, kunden_id, 'S', 0, 0]
+        //   ]))
+        //   : me_msg.addSeg(Helper.newSegFromArray('HNSHK', 3, [me_msg.sign_it.pin_vers, 1, 1, 1, [2, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
+        //     [1, 999, 1],
+        //     [6, 10, 16],
+        //     [280, blz, kunden_id, 'S', 0, 0]
+        //   ]));
       }
     }
   };
@@ -151,9 +165,9 @@ let message = function (proto_version) {
       }
     }
 
-    for (var i = 1; i != me_msg.segments.length; i++) {
-      body += me_msg.segments[i].transformForSend();
-    }
+    me_msg.segments.map(function (s) {
+      body += s.transformForSend();
+    });
 
     // Letztes segment erstellen
     if (me_msg.sign_it) {
@@ -177,12 +191,18 @@ let message = function (proto_version) {
       // Zertifikat                                   leer hier
       // +998+1+1::0+1:20141216:205751+2:2:13:@8@:5:1+280:12345678:max:V:0:0+0'
       if (me_msg.proto_version == 300) {
-        me_msg.hnvsk = Helper.newSegFromArray('HNVSK', 3, [
-          ['PIN', me_msg.sign_it.pin_vers == '999' ? 1 : 2], 998, 1, [1, NULL, me_msg.sign_it.sys_id],
-          [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
-          [2, 2, 13, Helper.Byte('\0\0\0\0\0\0\0\0'), 5, 1],
-          [280, me_msg.sign_it.blz, me_msg.sign_it.kunden_id, 'V', 0, 0], 0
-        ]);
+        let segmentHNVSK = {
+          name: 'HNVSK',
+          version: 3,
+          params: [
+            ['PIN', me_msg.sign_it.pin_vers == '999' ? 1 : 2], 998, 1, [1, NULL, me_msg.sign_it.sys_id],
+            [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
+            [2, 2, 13, Helper.Byte('\0\0\0\0\0\0\0\0'), 5, 1],
+            [280, me_msg.sign_it.blz, me_msg.sign_it.kunden_id, 'V', 0, 0], 0
+          ]
+        };
+
+        me_msg.hnvsk = h.types.createSegment(segmentHNVSK.name, segmentHNVSK.version, segmentHNVSK.params);
       } else {
         // TODO not supported 300
         // me_msg.hnvsk = Helper.newSegFromArray('HNVSK', 2, [998, 1, [1, NULL, me_msg.sign_it.sys_id],
@@ -192,18 +212,17 @@ let message = function (proto_version) {
         // ]);
       }
       me_msg.hnvsk.nr = 998;
-      var seg_hnvsd = Helper.newSegFromArray('HNVSD', 1, [Helper.Byte(body)]);
+      var seg_hnvsd = h.types.createSegment('HNVSD', 1, [Helper.Byte(body)]);
       seg_hnvsd.nr = 999;
       body = me_msg.hnvsk.transformForSend();
       body += seg_hnvsd.transformForSend();
     }
 
     // Abschließen
-    var seg = Helper.newSegFromArray('HNHBS', 1, [me_msg.msg_nr]);
+    var seg = h.types.createSegment('HNHBS', 1, [me_msg.msg_nr]);
     me_msg.addSeg(seg);
     body += seg.transformForSend();
-    var llength = top.length + body.length;
-    me_msg.segments[0].store.data[0] = h.padWithZero(llength);
+    me_msg.segments[0].store.data[0] = h.padWithZero(top.length + body.length);
     top = me_msg.segments[0].transformForSend();
     return top + body;
   };
@@ -250,57 +269,6 @@ let message = function (proto_version) {
     return r;
   };
 
-  // Nur für Debug/Entwicklungszwecke um ein JS Response aus einem echten Response zu generieren
-  me_msg.create_debug_js = function () {
-    var top = 'var sendMsg = new FinTSClient().testReturnMessageClass();\n\r';
-    var sig = '\n\r';
-    var body = '';
-
-    for (var i = 0; i != me_msg.segments.length; i++) {
-      if (me_msg.segments[i].name == 'HNHBK' ||
-        me_msg.segments[i].name == 'HNHBS' ||
-        me_msg.segments[i].name == 'HNSHA') {
-        // auslassen
-      } else if (me_msg.segments[i].name == 'HNSHK') {
-        // Signatur
-        sig = 'sendMsg.sign({\'pin\':\'pin1234\',\'tan\':null,\'sys_id\':\'' + me_msg.segments[i].getEl(6).getEl(3) + '\'});\n\r';
-      } else {
-        // generate array structure out of segment
-        var seg_array = new Array();
-
-        for (var a = 0; a != me_msg.segments[i].store.data.length; a++) {
-          if (me_msg.segments[i].store.desc[a] == 1) { // DE
-            seg_array.push(me_msg.segments[i].store.data[a]);
-          } else if (me_msg.segments[i].store.desc[a] == 2) { // DEG
-            // DEG durchforsten
-            var deg_array = new Array();
-
-            for (var d = 0; d != me_msg.segments[i].store.data[a].data.length; d++) {
-              if (me_msg.segments[i].store.data[a].desc[d] == 1) { // DE
-                deg_array.push(me_msg.segments[i].store.data[a].data[d]);
-              } else if (me_msg.segments[i].store.data[a].desc[d] == 2) { // DEG
-                // sollte hier garnicht auftreten
-                throw 'FEHLER DEG erhalten wo dies nicht passieren sollte';
-              } else if (me_msg.segments[i].store.desc[a].desc[d] == 3) { // BINARY
-                deg_array.push('BYTE' + me_msg.segments[i].store.data[a].data[d]);
-              }
-            }
-
-            seg_array.push(deg_array);
-          } else if (me_msg.segments[i].store.desc[a] == 3) { // BINARY
-            seg_array.push('BYTE' + me_msg.segments[i].store.data[a]);
-          }
-        }
-
-        if (me_msg.segments[i].bez == 0) {
-          body += 'sendMsg.addSeg(Helper.newSegFromArray(\'' + me_msg.segments[i].name + '\', ' + me_msg.segments[i].vers + ', ' + JSON.stringify(seg_array) + '));\n\r';
-        } else {
-          body += 'sendMsg.addSeg(Helper.newSegFromArrayWithBez(\'' + me_msg.segments[i].name + '\', ' + me_msg.segments[i].vers + ',' + me_msg.segments[i].bez + ',' + JSON.stringify(seg_array) + '));\n\r';
-        }
-      }
-    }
-    return top + sig + body;
-  };
 };
 
 module.exports = message;
