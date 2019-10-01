@@ -1,0 +1,24 @@
+{
+  "name": "fints-js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devbnz/fints-js.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/devbnz/fints-js/issues"
+  },
+  "homepage": "https://github.com/devbnz/fints-js#readme",
+  "dependencies": {
+    "encoding": "^0.1.12",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.7"
+  }
+}
