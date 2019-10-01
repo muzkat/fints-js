@@ -43,13 +43,6 @@ let helper = {
   padWithZero: function (nr, len = 12) {
     let textToPad = String(nr);
     return '0'.repeat((len - textToPad.length)) + textToPad;
-    //   var ltxt = '';
-    //   var neu = len - stxt.length;
-    //   for (var i = 0; i != neu; i++) {
-    //     ltxt += '0';
-    //   }
-    //   ltxt += stxt;
-    //   return ltxt;
   },
   types: {
     createSegment: function (segmentName, version, params) {

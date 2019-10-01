@@ -7,7 +7,7 @@ const p_classes = require('../open_fints_js_client-master/lib/Parser'),
   Segment = classes.Segment,
   h = require('./helper');
 
-let message = function (proto_version) {
+let message = function (proto_version = 300) {
   var me_msg = this;
   me_msg.segments = [];
   me_msg.segments_ctr = 0;
@@ -81,31 +81,8 @@ let message = function (proto_version) {
       var seg_vers, sec_profile;
       if (me_msg.proto_version == 300) {
         me_msg.addSeg(createHNSHK(me_msg.sign_it.server));
-        // me_msg.sign_it.server === undefined
-        //   ? me_msg.addSeg(Helper.newSegFromArray('HNSHK', 4, [
-        //     ['PIN', me_msg.sign_it.pin_vers == '999' ? 1 : 2], me_msg.sign_it.pin_vers, 1, 1, 1, [1, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
-        //     [1, 999, 1],
-        //     [6, 10, 16],
-        //     [280, blz, kunden_id, 'S', 0, 0]
-        //   ]))
-        //   : me_msg.addSeg(Helper.newSegFromArray('HNSHK', 4, [
-        //     ['PIN', me_msg.sign_it.pin_vers == '999' ? 1 : 2], me_msg.sign_it.pin_vers, 1, 1, 1, [2, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
-        //     [1, 999, 1],
-        //     [6, 10, 16],
-        //     [280, blz, kunden_id, 'S', 0, 0]
-        //   ]));
       } else {
-        // me_msg.sign_it.server === undefined
-        //   ? me_msg.addSeg(Helper.newSegFromArray('HNSHK', 3, [me_msg.sign_it.pin_vers, 1, 1, 1, [1, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
-        //     [1, 999, 1],
-        //     [6, 10, 16],
-        //     [280, blz, kunden_id, 'S', 0, 0]
-        //   ]))
-        //   : me_msg.addSeg(Helper.newSegFromArray('HNSHK', 3, [me_msg.sign_it.pin_vers, 1, 1, 1, [2, NULL, me_msg.sign_it.sys_id], signature_id, [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
-        //     [1, 999, 1],
-        //     [6, 10, 16],
-        //     [280, blz, kunden_id, 'S', 0, 0]
-        //   ]));
+        // TODO 220
       }
     }
   };
@@ -145,7 +122,7 @@ let message = function (proto_version) {
   };
 
   me_msg.transformForSend = function () {
-    var top = me_msg.segments[0].transformForSend();
+
     var body = '';
 
     // Signatur abschluss
@@ -204,12 +181,7 @@ let message = function (proto_version) {
 
         me_msg.hnvsk = h.types.createSegment(segmentHNVSK.name, segmentHNVSK.version, segmentHNVSK.params);
       } else {
-        // TODO not supported 300
-        // me_msg.hnvsk = Helper.newSegFromArray('HNVSK', 2, [998, 1, [1, NULL, me_msg.sign_it.sys_id],
-        //   [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
-        //   [2, 2, 13, Helper.Byte('\0\0\0\0\0\0\0\0'), 5, 1],
-        //   [280, me_msg.sign_it.blz, me_msg.sign_it.kunden_id, 'V', 0, 0], 0
-        // ]);
+        // TODO 220
       }
       me_msg.hnvsk.nr = 998;
       var seg_hnvsd = h.types.createSegment('HNVSD', 1, [Helper.Byte(body)]);
@@ -222,8 +194,9 @@ let message = function (proto_version) {
     var seg = h.types.createSegment('HNHBS', 1, [me_msg.msg_nr]);
     me_msg.addSeg(seg);
     body += seg.transformForSend();
+    var top = me_msg.segments[0].transformForSend();
     me_msg.segments[0].store.data[0] = h.padWithZero(top.length + body.length);
-    top = me_msg.segments[0].transformForSend();
+    //top = me_msg.segments[0].transformForSend();
     return top + body;
   };
 
@@ -235,38 +208,19 @@ let message = function (proto_version) {
   };
 
   me_msg.isSigned = function () {
-    return me_msg.selectSegByName('HNSHK').length == 1;
+    return me_msg.selectSegByName('HNSHK').length === 1;
   };
 
   me_msg.selectSegByName = function (name) {
-    console.log('selectSegByName:' + name);
-    var r = [];
-    for (var i = 0; i != me_msg.segments.length; i++) {
-      if (me_msg.segments[i].name == name) {
-        r.push(me_msg.segments[i]);
-      }
-    }
-    return r;
+    return me_msg.segments.filter(s => s.name === name);
   };
 
   me_msg.selectSegByBelongTo = function (belong_to) {
-    var r = [];
-    for (var i = 0; i != me_msg.segments.length; i++) {
-      if (me_msg.segments[i].bez == (belong_to + '')) {
-        r.push(me_msg.segments[i]);
-      }
-    }
-    return r;
+    return me_msg.segments.filter(s => s.bez === (belong_to + ''));
   };
 
   me_msg.selectSegByNameAndBelongTo = function (name, belong_to) {
-    var r = [];
-    for (var i = 0; i != me_msg.segments.length; i++) {
-      if (me_msg.segments[i].name == name && me_msg.segments[i].bez == (belong_to + '')) {
-        r.push(me_msg.segments[i]);
-      }
-    }
-    return r;
+    return me_msg.segments.filter(s => s.name === name && s.bez === (belong_to + ''));
   };
 
 };
