@@ -1,5 +1,5 @@
 const urlLib = require('url'),
-  encoding = require('encoding');
+  encoding = require('encoding'), c = require('../open_fints_js_client-master/lib/Classes'), Helper = c.Helper;
 
 let helper = {
   logRawMsg: function (msg, specifier) {
@@ -50,6 +50,16 @@ let helper = {
     //   }
     //   ltxt += stxt;
     //   return ltxt;
+  },
+  types: {
+    createSegment: function (segmentName, version, params) {
+      return Helper.newSegFromArray(segmentName, version, params);
+    },
+    HKSYN: {
+      create: function (protocolVersion = 300) {
+        return helper.types.createSegment('HKSYN', protocolVersion === 220 ? 2 : 3, [0]);
+      }
+    }
   }
 };
 
