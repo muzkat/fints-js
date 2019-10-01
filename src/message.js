@@ -4,7 +4,8 @@ const p_classes = require('../open_fints_js_client-master/lib/Parser'),
   classes = require('../open_fints_js_client-master/lib/Classes'),
   NULL = classes.NULL,
   Helper = classes.Helper,
-  Segment = classes.Segment;
+  Segment = classes.Segment,
+  h = require('./helper');
 
 let message = function (proto_version) {
   var me_msg = this;
@@ -26,7 +27,7 @@ let message = function (proto_version) {
     var seg = new Segment();
     seg.init('HNHBK', 1, 3, 0);
     me_msg.addSeg(seg);
-    seg.store.addDE(Helper.getNrWithLeadingNulls(0, 12)); // Länge
+    seg.store.addDE(h.padWithZero(0)); // Länge
     seg.store.addDE(me_msg.proto_version + ''); // Version
     seg.store.addDE(dialog_id); // Dialog-ID, bei 0 beginnend wird von KI bekannt gegeben
     seg.store.addDE(me_msg.msg_nr); // Nachrichten-Nr. streng monoton von 1 ab steigen
@@ -183,11 +184,12 @@ let message = function (proto_version) {
           [280, me_msg.sign_it.blz, me_msg.sign_it.kunden_id, 'V', 0, 0], 0
         ]);
       } else {
-        me_msg.hnvsk = Helper.newSegFromArray('HNVSK', 2, [998, 1, [1, NULL, me_msg.sign_it.sys_id],
-          [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
-          [2, 2, 13, Helper.Byte('\0\0\0\0\0\0\0\0'), 5, 1],
-          [280, me_msg.sign_it.blz, me_msg.sign_it.kunden_id, 'V', 0, 0], 0
-        ]);
+        // TODO not supported 300
+        // me_msg.hnvsk = Helper.newSegFromArray('HNVSK', 2, [998, 1, [1, NULL, me_msg.sign_it.sys_id],
+        //   [1, Helper.convertDateToDFormat(new Date()), Helper.convertDateToTFormat(new Date())],
+        //   [2, 2, 13, Helper.Byte('\0\0\0\0\0\0\0\0'), 5, 1],
+        //   [280, me_msg.sign_it.blz, me_msg.sign_it.kunden_id, 'V', 0, 0], 0
+        // ]);
       }
       me_msg.hnvsk.nr = 998;
       var seg_hnvsd = Helper.newSegFromArray('HNVSD', 1, [Helper.Byte(body)]);
@@ -201,7 +203,7 @@ let message = function (proto_version) {
     me_msg.addSeg(seg);
     body += seg.transformForSend();
     var llength = top.length + body.length;
-    me_msg.segments[0].store.data[0] = Helper.getNrWithLeadingNulls(llength, 12);
+    me_msg.segments[0].store.data[0] = h.padWithZero(llength);
     top = me_msg.segments[0].transformForSend();
     return top + body;
   };
