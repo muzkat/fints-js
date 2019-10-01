@@ -39,6 +39,17 @@ let helper = {
   textToPostData: function (data) {
     let buffer = this.getBuffer(data);
     return buffer.toString('base64');
+  },
+  padWithZero: function (nr, len = 12) {
+    let textToPad = String(nr);
+    return '0'.repeat((len - textToPad.length)) + textToPad;
+    //   var ltxt = '';
+    //   var neu = len - stxt.length;
+    //   for (var i = 0; i != neu; i++) {
+    //     ltxt += '0';
+    //   }
+    //   ltxt += stxt;
+    //   return ltxt;
   }
 };
 
